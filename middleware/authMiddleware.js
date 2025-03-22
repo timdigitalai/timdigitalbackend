@@ -41,7 +41,5 @@ const isAdmin = async (req, res, next) => {
   }
 };
 
-console.log("Auth Middleware Loaded");
-console.log("Auth Middleware Exported: ", { authenticate, isAdmin });
 
 module.exports = { authenticate, isAdmin };

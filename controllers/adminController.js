@@ -1,6 +1,9 @@
 const Business = require('../models/Business');
 const multer = require('multer');
 const path = require('path');
+const User = require('../models/User');
+const Review = require('../models/Review');
+const Analytics = require('../models/Analytics');
 
 // Setup multer for image uploading
 const storage = multer.diskStorage({
@@ -113,5 +116,235 @@ exports.registerBusiness = async (req, res) => {
     res.status(201).json({ message: 'Business registered successfully', business });
   } catch (error) {
     res.status(500).json({ message: 'Error registering business', error: error.message });
+  }
+};
+
+// Get list of all users (tourists & business owners)
+exports.getUsers = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, role, search } = req.query;
+    const query = {};
+
+    // Filter by role if provided
+    if (role) {
+      query.role = role;
+    }
+
+    // Search by name or email if provided
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const users = await User.find(query)
+      .select('-password')
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const count = await User.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      users,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
+      totalUsers: count
+    });
+  } catch (error) {
+    console.error('Get users error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching users',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// Ban a user
+exports.banUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    user.isBanned = true;
+    user.banReason = req.body.reason || 'Violated terms of service';
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'User banned successfully',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        isBanned: user.isBanned,
+        banReason: user.banReason
+      }
+    });
+  } catch (error) {
+    console.error('Ban user error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error banning user',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// Unban a user
+exports.unbanUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    user.isBanned = false;
+    user.banReason = undefined;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'User unbanned successfully',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        isBanned: user.isBanned
+      }
+    });
+  } catch (error) {
+    console.error('Unban user error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error unbanning user',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// Get popular places analytics
+exports.getPopularPlaces = async (req, res) => {
+  try {
+    const { timeframe = '7d', limit = 10 } = req.query;
+    
+    // Calculate date range based on timeframe
+    const date = new Date();
+    date.setDate(date.getDate() - parseInt(timeframe));
+
+    const popularPlaces = await Business.aggregate([
+      {
+        $lookup: {
+          from: 'reviews',
+          localField: '_id',
+          foreignField: 'businessId',
+          as: 'reviews'
+        }
+      },
+      {
+        $project: {
+          name: 1,
+          category: 1,
+          location: 1,
+          rating: 1,
+          reviewCount: { $size: '$reviews' },
+          averageRating: { $avg: '$reviews.rating' }
+        }
+      },
+      {
+        $sort: {
+          reviewCount: -1,
+          averageRating: -1
+        }
+      },
+      {
+        $limit: parseInt(limit)
+      }
+    ]);
+
+    res.status(200).json({
+      success: true,
+      timeframe,
+      popularPlaces
+    });
+  } catch (error) {
+    console.error('Get popular places error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching popular places',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// Get user activity insights
+exports.getUserActivity = async (req, res) => {
+  try {
+    const { timeframe = '7d' } = req.query;
+    
+    // Calculate date range based on timeframe
+    const date = new Date();
+    date.setDate(date.getDate() - parseInt(timeframe));
+
+    // Get new user registrations
+    const newUsers = await User.countDocuments({
+      createdAt: { $gte: date }
+    });
+
+    // Get review activity
+    const reviewActivity = await Review.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: date }
+        }
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { _id: 1 }
+      }
+    ]);
+
+    // Get active users (users who posted reviews)
+    const activeUsers = await Review.distinct('userId', {
+      createdAt: { $gte: date }
+    });
+
+    res.status(200).json({
+      success: true,
+      timeframe,
+      statistics: {
+        newUsers,
+        totalReviews: reviewActivity.reduce((sum, day) => sum + day.count, 0),
+        activeUsers: activeUsers.length,
+        dailyActivity: reviewActivity
+      }
+    });
+  } catch (error) {
+    console.error('Get user activity error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching user activity',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };

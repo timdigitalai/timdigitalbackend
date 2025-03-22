@@ -1,18 +1,22 @@
 const mongoose = require('mongoose');
 
 const userPreferencesSchema = new mongoose.Schema({
-  user: {
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
   },
   preferredCategories: {
     type: [String],
-    default: [],
+    required: true,
+  },
+  location: {
+    type: String,
+    required: true,
   },
   preferredRating: {
     type: Number,
-    default: 4,  // default rating filter of 4
+    required: true,
   },
 });
 

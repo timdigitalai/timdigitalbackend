@@ -23,12 +23,23 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['user', 'businessOwner', 'admin'],
+      enum: ['user', 'business_owner', 'admin'],
       default: 'user',
+    },
+    isBanned: {
+      type: Boolean,
+      default: false
+    },
+    banReason: {
+      type: String
     },
     profilePic: {
       type: String,
       default: null
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
     }
   },
   { 
@@ -44,6 +55,19 @@ const userSchema = new mongoose.Schema(
 
 // Index for email lookups
 userSchema.index({ email: 1 });
+
+// Hash password before saving
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
 // Method to compare password
 userSchema.methods.comparePassword = async function (candidatePassword) {

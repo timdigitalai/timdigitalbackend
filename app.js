@@ -11,6 +11,8 @@ const recommendationRoutes = require('./routes/recommendationRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const wishlistRoutes = require('./routes/wishlistRoutes');
 const userRoutes = require('./routes/userRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const shareRoutes = require('./routes/shareRoutes');
 const travellerRouter = require('./routes/route.traveller')
 require("dotenv").config();
 
@@ -40,11 +42,13 @@ app.use((req, res, next) => {
 // Routes
 app.use('/auth', authRoutes);
 app.use('/businesses', businessRoutes);
-app.use("/reviews", reviewRoutes);
+app.use('/reviews', reviewRoutes);
 app.use('/recommendations', recommendationRoutes);
 app.use('/admin', adminRoutes);
 app.use('/wishlist', wishlistRoutes);
 app.use('/user', userRoutes);
+app.use('/notifications', notificationRoutes);
+app.use('/share', shareRoutes);
 app.use('/traveller', travellerRouter);
 
 // Catch 404 and forward to error handler
