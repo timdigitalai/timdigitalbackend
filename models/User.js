@@ -2,8 +2,16 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+  fullName: { type: String, required: true },
+  dateOfBirth: { type: Date, required: true },
+  nationality: { type: String, required: true },
+  phoneNumber: { type: String, required: true },
+  gender: { type: String, enum: ['male', 'female', 'other'], required: true },
   email: { type: String, required: true, unique: true },
+  companyName: { type: String },
+  address: { type: String },
+  city: { type: String },
+  country: { type: String, required: true },
   password: { type: String, required: true },
   role: { type: String, enum: ['tourist', 'business', 'admin'], default: 'tourist' },
   wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Business' }],
