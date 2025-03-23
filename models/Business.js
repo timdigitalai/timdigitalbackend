@@ -1,23 +1,37 @@
 const mongoose = require('mongoose');
 
 const businessSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  category: { type: String, required: true },
+  name: {
+    type: String,
+    required: true,
+  },
+  description: {
+    type: String,
+    required: true,
+  },
   location: {
-    type: { type: String, default: 'Point' },
-    coordinates: { type: [Number], required: true }
+    type: String,
+    required: true,
   },
-  description: { type: String },
-  images: [{ type: String }],
-  contact: {
-    phone: { type: String },
-    website: { type: String },
-    socialMedia: [{ type: String }]
+  category: {
+    type: String,
+    required: true,
   },
-  owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  createdAt: { type: Date, default: Date.now }
+  owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending',
+  },
+  images: [String], // Array to store image URLs
+  contactDetails: {
+    type: Map,
+    of: String,
+  },
 });
-
-businessSchema.index({ location: '2dsphere' }); // For geospatial queries
 
 module.exports = mongoose.model('Business', businessSchema);
