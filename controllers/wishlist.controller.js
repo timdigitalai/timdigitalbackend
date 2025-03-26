@@ -1,5 +1,5 @@
 const Wishlist = require('../models/Wishlist');
-const Business = require('../models/Business');
+const Business = require('../models/model.business');
 
 // Add to wishlist
 exports.addToWishlist = async (req, res) => {

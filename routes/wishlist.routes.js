@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const wishlistController = require('../controllers/wishlistController');
-const { authenticate } = require('../middleware/authMiddleware');
+const wishlistController = require('../controllers/wishlist.controller');
+const { authenticate } = require('../middleware/auth.middleware');
 
 // Debug middleware
 router.use((req, res, next) => {

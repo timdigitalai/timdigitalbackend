@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const reviewController = require('../controllers/reviewController');
-const { authenticate, isAdmin } = require('../middleware/authMiddleware');
+const reviewController = require('../controllers/review.controller');
+const { authenticate, isAdmin } = require('../middleware/auth.middleware');
 
 // Debug middleware to log all requests
 router.use((req, res, next) => {

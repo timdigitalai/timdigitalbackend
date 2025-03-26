@@ -1,5 +1,5 @@
 const Notification = require('../models/Notification');
-const Business = require('../models/Business');
+const Business = require('../models/model.business');
 const User = require('../models/User');
 const mongoose = require('mongoose');
 
@@ -32,7 +32,7 @@ exports.sendNotification = async (req, res) => {
     }
 
     let notifications = [];
-    
+
     if (broadcast) {
       // Send to all users
       const allUsers = await User.find({}, '_id');
@@ -49,7 +49,7 @@ exports.sendNotification = async (req, res) => {
       );
     } else if (userIds && Array.isArray(userIds)) {
       const validUserIds = userIds.filter(id => mongoose.Types.ObjectId.isValid(id));
-      
+
       if (validUserIds.length === 0) {
         return res.status(400).json({
           success: false,
@@ -176,4 +176,4 @@ exports.markAsRead = async (req, res) => {
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
-}; 
+};

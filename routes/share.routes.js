@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const shareController = require('../controllers/shareController');
-const authMiddleware = require('../middleware/authMiddleware');
+const shareController = require('../controllers/share.controller');
+const authMiddleware = require('../middleware/auth.middleware');
 
 // Debug middleware
 router.use((req, res, next) => {
@@ -15,4 +15,4 @@ router.use(authMiddleware.authenticate);
 // Share business on social media
 router.post('/', shareController.shareBusiness);
 
-module.exports = router; 
+module.exports = router;

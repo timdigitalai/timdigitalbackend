@@ -1,6 +1,6 @@
 const UserPreferences = require('../models/userPreferencesModel');  // Your model for user preferences
 const { getRecommendations } = require('../services/aiRecommendationService');  // Your AI recommendation service
-const Business = require('../models/Business');  // Your model for businesses
+const Business = require('../models/model.business');  // Your model for businesses
 const Recommendation = require('../models/Recommendation');
 const Review = require('../models/Review');
 
@@ -166,13 +166,13 @@ exports.generateRecommendations = async (req, res) => {
 
     // Get user's reviews and preferences
     const userReviews = await Review.find({ userId });
-    
+
     // Get all businesses
     const businesses = await Business.find();
 
     // Simple recommendation algorithm based on category matching
     const recommendations = [];
-    
+
     for (const business of businesses) {
       // Skip businesses the user has already reviewed
       if (userReviews.some(review => review.businessId.toString() === business._id.toString())) {
